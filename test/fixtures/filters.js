@@ -4,5 +4,8 @@ module.exports = {
   },
   uppercase: function(str) {
     return str.toUpperCase();
+  },
+  split: function(str, splitter) {
+    return str.split(splitter);
   }
 }

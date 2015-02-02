@@ -40,6 +40,11 @@ describe('x-ray-select', function() {
     it('should support multiple filters', function() {
       var xray = Xray(matio, filters);
       assert('GITHUB.COM/MATTHEWMUELLER' == xray('a[href]|href|uppercase'));
+    });
+
+    it('should support filters with arguments', function() {
+      var xray = Xray(matio, filters);
+      assert.deepEqual(['github.com', 'matthewmueller'], xray('a[href]|href|split:/'));
     })
   })
 
@@ -70,7 +75,7 @@ describe('x-ray-select', function() {
     })
 
     it('should work with an array of objects', function() {
-
+      var xray = Xray(matio);
       var arr = xray([{
         $root: '.item',
         link: 'a[href]',

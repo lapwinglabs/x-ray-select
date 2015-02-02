@@ -2,6 +2,7 @@
  * Module Dependencies
  */
 
+var formatParser = require('format-parser');
 var type = require('component-type');
 var cheerio = require('cheerio');
 var isArray = Array.isArray;
@@ -58,11 +59,12 @@ function Xray(html, filters) {
     function findMany($el, str) {
       if ('string' != type(str)) return [xray(str, $el)];
       var m = parse(str);
+      var els =$el.find(m[1]).toArray();
 
-      return $el.find(m[1]).map(function(i, el) {
+      return els.map(function(el) {
         var content = m[2] ? $(el).attr(m[2]) : $(el).text();
         return applyFilters(content, m.filters);
-      }).toArray();
+      });
     }
 
     // fill a single object
@@ -96,24 +98,27 @@ function Xray(html, filters) {
       });
     }
 
-    function applyFilters(str, fns) {
-      return fns.reduce(function(out, fn) {
-        return fn(out);
+    function applyFilters(str, formatters) {
+      return formatters.reduce(function(out, formatter) {
+        return formatter.fn.apply(formatter.fn, [out].concat(formatter.args));
       }, str);
     }
 
     function parse(str) {
-      var fns = str.split(rfilters);
-      str = fns.shift();
+      var formatters = str.split(rfilters);
+      str = formatters.shift();
 
-      fns = fns.filter(function(key) {
-        return filters[key];
-      }).map(function(key) {
-        return filters[key];
+      formatters = formatParser(formatters.join('|'));
+
+      formatters = formatters.filter(function(formatter) {
+        return filters[formatter.name];
+      }).map(function(formatter) {
+        formatter.fn = filters[formatter.name];
+        return formatter;
       })
 
       var m = str.match(rselector);
-      m.filters = fns;
+      m.filters = formatters;
       return m;
     }
   }

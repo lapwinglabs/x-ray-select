@@ -2,11 +2,17 @@
 
 The selection parser for x-ray. Aiming to bring structure to the web.
 
-## API
+## Installation
 
 ```bash
 npm install x-ray-select
 ```
+
+## Features
+
+- Supports collections and nested collections
+- Supports filters with arguments using [format-parser](http://github.com/component/format-parser)
+- Supports attribute selection
 
 ## Example
 
