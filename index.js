@@ -95,6 +95,8 @@ function Xray(html, filters) {
           if (found) out[k] = found;
         });
         return out;
+      }).filter(function(item) {
+        return keys(item).length;
       });
     }
 

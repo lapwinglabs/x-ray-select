@@ -46,6 +46,11 @@ describe('x-ray-select', function() {
       var xray = Xray(matio, filters);
       assert.deepEqual(['github.com', 'matthewmueller'], xray('a[href]|href|split:/'));
     })
+
+    it('should return undefined if nothing is false', function() {
+      var xray = Xray(matio);
+      assert(undefined === xray('.zzzzz'))
+    })
   })
 
 
@@ -61,6 +66,12 @@ describe('x-ray-select', function() {
         "mailto:matt@lapwinglabs.com"
       ]);
     });
+
+    it('should return an empty array when nothing is available', function() {
+      var xray = Xray(matio);
+      var arr = xray(['.zzzz']);
+      assert.deepEqual([], arr);
+    })
 
     it('should support filters', function() {
       var xray = Xray(matio, filters);
@@ -96,6 +107,15 @@ describe('x-ray-select', function() {
         link: 'https://github.com/mentum/lambdaws',
         thumb: 'https://avatars0.githubusercontent.com/u/10017482?v=3&s=400'
       });
+    });
+
+    it('should work with arrays of objects when nothing is found', function() {
+      var xray = Xray(matio);
+      var arr = xray([{
+        thumb: '.thumbz'
+      }]);
+
+      assert.deepEqual([], arr);
     })
 
     it('should support filters on objects', function() {
@@ -168,6 +188,14 @@ describe('x-ray-select', function() {
   });
 
   describe('objects', function() {
+    it('shoudl return an empty object when nothing is found', function() {
+      var xray = Xray(matio);
+      var obj = xray({
+        thumb: '.thumbz'
+      });
+      assert.deepEqual({}, obj);
+    })
+
     it('should work with shallow objects', function() {
       var xray = Xray(matio);
 
