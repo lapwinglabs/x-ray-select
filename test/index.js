@@ -2,6 +2,7 @@
  * Module Dependencies
  */
 
+var cheerio = require('cheerio');
 var join = require('path').join;
 var assert = require('assert');
 var Xray = require('..');
@@ -31,6 +32,11 @@ describe('x-ray-select', function() {
       var xray = Xray(matio);
       assert('http://github.com/matthewmueller' == xray('a[href]'));
     })
+
+    it('should support when cheerio instances are passed in', function() {
+      var xray = Xray(cheerio.load(matio));
+      assert('http://github.com/matthewmueller' == xray('a[href]'));
+    });
 
     it('should support filters', function() {
       var xray = Xray(matio, filters);

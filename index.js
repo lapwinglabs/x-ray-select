@@ -34,7 +34,7 @@ function Xray(html, filters) {
   filters = filters || {};
   html = html || '';
 
-  var $ = cheerio.load(html);
+  var $ = html.html ? html : cheerio.load(html);
   var $root = $.root();
 
   function xray(obj, root) {
