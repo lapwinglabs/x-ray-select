@@ -194,7 +194,7 @@ describe('x-ray-select', function() {
   });
 
   describe('objects', function() {
-    it('shoudl return an empty object when nothing is found', function() {
+    it('should return an empty object when nothing is found', function() {
       var xray = Xray(matio);
       var obj = xray({
         thumb: '.thumbz'
@@ -254,14 +254,16 @@ describe('x-ray-select', function() {
         tags: ['.item-tags li']
       })
 
-      console.log(obj);
-      // assert(0 == obj.thumb.indexOf('http'));
-      // assert(0 == obj.link.indexOf('http'));
-      // assert(obj.content.title.length);
-      // assert(obj.content.body.length);
-      //
-      // assert(obj.tags.length > 0);
-      // assert(obj.tags.length < 8);
+      assert.deepEqual(obj, {
+        link: 'https://github.com/bmcmahen/react-wysiwyg',
+        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        content: {
+          title: 'bmcmahen/react-wysiwyg',
+          body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    '
+        },
+        tags: [ 'github', 'development' ]
+      });
+
     });
   });
 });
