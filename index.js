@@ -50,7 +50,7 @@ function Xray(html, filters) {
     // create a collection
     function collection(arr, v) {
       switch (type(v)) {
-        case 'string': return arr.concat(findMany(root, v));
+        case 'string': return arr.concat(findMany(root.eq(0), v));
         case 'object': return fillMany(v);
       }
     }
@@ -60,7 +60,6 @@ function Xray(html, filters) {
       if ('string' != type(str)) return [xray(str, $el)];
       var m = parse(str);
       var els =$el.find(m[1]).toArray();
-
       return els.map(function(el) {
         var content = m[2] ? $(el).attr(m[2]) : $(el).text();
         return applyFilters(content, m.filters);

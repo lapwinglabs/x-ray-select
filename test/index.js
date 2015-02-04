@@ -55,7 +55,7 @@ describe('x-ray-select', function() {
 
     it('should return undefined if nothing is false', function() {
       var xray = Xray(matio);
-      assert(undefined === xray('.zzzzz'))
+      assert(undefined === xray('.zzzzz'));
     })
   })
 
@@ -237,6 +237,31 @@ describe('x-ray-select', function() {
           content: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    '
         }
       });
+    });
+
+    it('should support single objects with an array inside', function() {
+      var xray = Xray(matio);
+
+      var obj = xray({
+        $root: ".item",
+        link: 'a[href]',
+        thumb: 'img[src]',
+        content: {
+          $root: '.item-content',
+          title: 'h2',
+          body: 'section'
+        },
+        tags: ['.item-tags li']
+      })
+
+      console.log(obj);
+      // assert(0 == obj.thumb.indexOf('http'));
+      // assert(0 == obj.link.indexOf('http'));
+      // assert(obj.content.title.length);
+      // assert(obj.content.body.length);
+      //
+      // assert(obj.tags.length > 0);
+      // assert(obj.tags.length < 8);
     });
   });
 });
