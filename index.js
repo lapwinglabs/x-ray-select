@@ -61,7 +61,14 @@ function Xray(html, filters) {
       var m = parse(str);
       var els =$el.find(m[1]).toArray();
       return els.map(function(el) {
-        var content = m[2] ? $(el).attr(m[2]) : $(el).text();
+        var content;
+        if (m[2] === 'html') {
+          content = $(el).html();
+        } else if (m[2]) {
+          content = $(el).attr(m[2]);
+        } else {
+          content = $(el).text();
+        }
         return applyFilters(content, m.filters);
       });
     }
