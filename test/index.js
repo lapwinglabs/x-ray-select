@@ -33,6 +33,11 @@ describe('x-ray-select', function() {
       assert('http://github.com/matthewmueller' == xray('a[href]'));
     })
 
+    it('should support [html] to get the innerHTML', function() {
+      var xray = Xray(matio);
+      assert('<a href="http://github.com/matthewmueller">Github</a>' == xray('.Header-list-item[html]').trim());
+    });
+
     it('should support when cheerio instances are passed in', function() {
       var xray = Xray(cheerio.load(matio));
       assert('http://github.com/matthewmueller' == xray('a[href]'));
