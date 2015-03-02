@@ -1,4 +1,10 @@
 
+1.0.5 / 2015-03-02
+==================
+
+  * fix falsy values for single objects
+  * fixed an issue where falsy values from filters would removed from the result https://github.com/lapwinglabs/x-ray/issues/11
+
 1.0.4 / 2015-03-01
 ==================
 
