@@ -65,7 +65,7 @@ describe('x-ray-select', function() {
 
     it('should support falsy values from filters', function() {
       var xray = Xray(matio, filters);
-      assert(false === xray('a[href]|https'));
+      assert(false === xray('a[href]|secure'));
     })
   })
 
@@ -101,13 +101,13 @@ describe('x-ray-select', function() {
       ]);
     })
 
-    it('should support falsy values from filters', function() {
+    it('should support falsy values from filters for collections', function() {
       var xray = Xray(matio, filters);
 
       var arr = xray([{
         $root: '.item',
         link: 'a[href]',
-        https: 'a[href] | https',
+        https: 'a[href] | secure',
       }]);
 
       assert.deepEqual(arr.shift(), { link: 'https://github.com/bmcmahen/react-wysiwyg', https: true });
@@ -117,6 +117,22 @@ describe('x-ray-select', function() {
       assert.deepEqual(arr.shift(), { link: 'http://ift.tt/1yOzsob', https: false });
       assert.deepEqual(arr.shift(), { link: 'https://github.com/Jam3/jam3-testing-tools', https: true });
     })
+
+    it('should support falsy values from filters for single objects', function() {
+      var xray = Xray(matio, filters);
+
+      var obj = xray({
+        $root: '.item',
+        link: 'a[href]',
+        http: 'a[href] | insecure',
+      });
+
+      assert.deepEqual(obj, {
+        link: 'https://github.com/bmcmahen/react-wysiwyg',
+        http: false
+      });
+    });
+
 
     it('should work with an array of objects', function() {
       var xray = Xray(matio);
