@@ -125,7 +125,7 @@ function Xray(html, filters) {
         return formatter;
       })
 
-      var m = str.match(rselector);
+      var m = str.match(rselector) || [];
       m.filters = formatters;
       return m;
     }
