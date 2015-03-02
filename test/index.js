@@ -62,6 +62,11 @@ describe('x-ray-select', function() {
       var xray = Xray(matio);
       assert(undefined === xray('.zzzzz'));
     })
+
+    it('should support falsy values from filters', function() {
+      var xray = Xray(matio, filters);
+      assert(false === xray('a[href]|https'));
+    })
   })
 
 
@@ -94,6 +99,23 @@ describe('x-ray-select', function() {
         "lapwinglabs.com",
         "mailto:matt@lapwinglabs.com"
       ]);
+    })
+
+    it('should support falsy values from filters', function() {
+      var xray = Xray(matio, filters);
+
+      var arr = xray([{
+        $root: '.item',
+        link: 'a[href]',
+        https: 'a[href] | https',
+      }]);
+
+      assert.deepEqual(arr.shift(), { link: 'https://github.com/bmcmahen/react-wysiwyg', https: true });
+      assert.deepEqual(arr.shift(), { link: 'http://lapwinglabs.com/', https: false });
+      assert.deepEqual(arr.shift(), { link: 'https://github.com/mentum/lambdaws', https: true });
+      assert.deepEqual(arr.shift(), { link: 'https://github.com/russss/Herd', https: true });
+      assert.deepEqual(arr.shift(), { link: 'http://ift.tt/1yOzsob', https: false });
+      assert.deepEqual(arr.shift(), { link: 'https://github.com/Jam3/jam3-testing-tools', https: true });
     })
 
     it('should work with an array of objects', function() {

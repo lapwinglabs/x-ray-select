@@ -98,7 +98,7 @@ function Xray(html, filters) {
         arr.forEach(function(k) {
           var v = obj[k];
           var found = findMany($(el), v)[0];
-          if (found) out[k] = found;
+          if (typeof found !== 'undefined') out[k] = found;
         });
         return out;
       }).filter(function(item) {
