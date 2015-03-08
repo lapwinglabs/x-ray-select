@@ -139,22 +139,26 @@ describe('x-ray-select', function() {
       var arr = xray([{
         $root: '.item',
         link: 'a[href]',
-        thumb: 'img[src]'
+        thumb: 'img[src]',
+        className: '[class]'
       }]);
 
       assert.deepEqual(arr.shift(), {
         link: 'https://github.com/bmcmahen/react-wysiwyg',
-        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400'
+        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        className: 'item'
       });
 
       assert.deepEqual(arr.shift(), {
         link: 'http://lapwinglabs.com/',
-        thumb: 'http://lapwinglabs.com/thumbnail.png'
+        thumb: 'http://lapwinglabs.com/thumbnail.png',
+        className: 'item'
       });
 
       assert.deepEqual(arr.shift(), {
         link: 'https://github.com/mentum/lambdaws',
-        thumb: 'https://avatars0.githubusercontent.com/u/10017482?v=3&s=400'
+        thumb: 'https://avatars0.githubusercontent.com/u/10017482?v=3&s=400',
+        className: 'item'
       });
     });
 
@@ -173,17 +177,20 @@ describe('x-ray-select', function() {
       var arr = xray([{
         $root: '.item',
         link: 'a[href] | href',
-        thumb: 'img[src] | href | uppercase'
+        thumb: 'img[src] | href | uppercase',
+        className: '[class] | uppercase'
       }]);
 
       assert.deepEqual(arr.shift(), {
         link: 'github.com/bmcmahen/react-wysiwyg',
-        thumb: 'AVATARS2.GITHUBUSERCONTENT.COM/U/1236841?V=3&S=400'
+        thumb: 'AVATARS2.GITHUBUSERCONTENT.COM/U/1236841?V=3&S=400',
+        className: 'ITEM'
       });
 
       assert.deepEqual(arr.shift(), {
         link: 'lapwinglabs.com/',
-        thumb: 'LAPWINGLABS.COM/THUMBNAIL.PNG'
+        thumb: 'LAPWINGLABS.COM/THUMBNAIL.PNG',
+        className: 'ITEM'        
       });
     })
 
@@ -194,10 +201,12 @@ describe('x-ray-select', function() {
         $root: '.item',
         link: 'a[href]',
         thumb: 'img[src]',
+        className: '[class]',
         content: {
           $root: '.item-content',
           title: 'h2',
-          body: 'section'
+          body: 'section',
+          className: '[class]'
         },
         tags: ['.item-tags li']
       }]);
@@ -205,9 +214,11 @@ describe('x-ray-select', function() {
       assert.deepEqual(arr.shift(), {
         link: 'https://github.com/bmcmahen/react-wysiwyg',
         thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        className: 'item',
         content: {
-           title: 'bmcmahen/react-wysiwyg',
-           body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    '
+          title: 'bmcmahen/react-wysiwyg',
+          body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    ',
+          className: 'item-content',
         },
         tags: [ 'github', 'development' ]
       });
@@ -215,9 +226,11 @@ describe('x-ray-select', function() {
       assert.deepEqual(arr.shift(), {
         "link": "http://lapwinglabs.com/",
         "thumb": "http://lapwinglabs.com/thumbnail.png",
+        "className": "item",
         "content": {
           "title": "Lapwing Labs",
-          "body": "\n                        New Blog Post: Principles of an Ideal Database Client.\n                        http://t.co/CRsotzXeWQ — Matthew Mueller (@MattMueller)\n                        January 25, 2015\n                    "
+          "body": "\n                        New Blog Post: Principles of an Ideal Database Client.\n                        http://t.co/CRsotzXeWQ — Matthew Mueller (@MattMueller)\n                        January 25, 2015\n                    ",
+          "className": "item-content"
         },
         "tags": [
           "twitter"
@@ -227,9 +240,11 @@ describe('x-ray-select', function() {
       assert.deepEqual(arr.shift(), {
         "link": "https://github.com/mentum/lambdaws",
         "thumb": "https://avatars0.githubusercontent.com/u/10017482?v=3&s=400",
+        "className": "item",
         "content": {
           "title": "mentum/lambdaws",
-          "body": "\n                        MatthewMueller starred mentum/lambdaws\n                    "
+          "body": "\n                        MatthewMueller starred mentum/lambdaws\n                    ",
+          "className": "item-content"
         },
         "tags": []
       });
@@ -251,11 +266,14 @@ describe('x-ray-select', function() {
       var obj = xray({
         $root: '.item',
         link: 'a[href]',
-        thumb: 'img[src]'
+        thumb: 'img[src]',
+        className: '[class]'
       });
 
       assert.equal('https://github.com/bmcmahen/react-wysiwyg', obj.link);
       assert.equal('https://avatars2.githubusercontent.com/u/1236841?v=3&s=400', obj.thumb);
+      assert.equal('item', obj.className);
+
     });
 
     it('should work with deeply nested objects', function() {
@@ -265,19 +283,23 @@ describe('x-ray-select', function() {
         $root: '.item',
         link: 'a[href]',
         thumb: 'img[src]',
+        className: '[class]',
         content: {
           $root: '.item-content',
           title: 'h2',
-          content: 'section'
+          content: 'section',
+          className: '[class]'
         }
       });
 
       assert.deepEqual(obj, {
         link: 'https://github.com/bmcmahen/react-wysiwyg',
         thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        className: 'item',
         content: {
           title: 'bmcmahen/react-wysiwyg',
-          content: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    '
+          content: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    ',
+          className: 'item-content'
         }
       });
     });
@@ -289,10 +311,12 @@ describe('x-ray-select', function() {
         $root: ".item",
         link: 'a[href]',
         thumb: 'img[src]',
+        className: '[class]',        
         content: {
           $root: '.item-content',
           title: 'h2',
-          body: 'section'
+          body: 'section',
+          className: '[class]'
         },
         tags: ['.item-tags li']
       })
@@ -300,9 +324,11 @@ describe('x-ray-select', function() {
       assert.deepEqual(obj, {
         link: 'https://github.com/bmcmahen/react-wysiwyg',
         thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        className: 'item',
         content: {
           title: 'bmcmahen/react-wysiwyg',
-          body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    '
+          body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    ',
+          className: 'item-content'
         },
         tags: [ 'github', 'development' ]
       });
