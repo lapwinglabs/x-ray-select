@@ -18,7 +18,7 @@ module.exports = Xray;
  * Regexps
  */
 
-var rselector = /([^\[]+)(?:\[([^\[]+)\])?/;
+var rselector = /([^\[]+)?(?:\[([^\[]+)\])?/;
 var rfilters = /\s*\|\s*/;
 
 /**
@@ -59,7 +59,7 @@ function Xray(html, filters) {
     function findMany($el, str) {
       if ('string' != type(str)) return [xray(str, $el)];
       var m = parse(str);
-      var els =$el.find(m[1]).toArray();
+      var els = m[1] ? $el.find(m[1]).toArray() : [$el];
       return els.map(function(el) {
         var content;
         if (m[2] === 'html') {
