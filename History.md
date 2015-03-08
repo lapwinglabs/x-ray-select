@@ -1,4 +1,10 @@
 
+1.0.6 / 2015-03-08
+==================
+
+  * select attributes on $root elements
+  * return empty array if str.match return null
+
 1.0.5 / 2015-03-02
 ==================
 
