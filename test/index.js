@@ -6,6 +6,7 @@ var cheerio = require('cheerio');
 var join = require('path').join;
 var assert = require('assert');
 var Xray = require('..');
+var rselector = /(.*(?=->)|.*)(?:->(.*))?/;
 var fs = require('fs');
 
 /**
@@ -20,6 +21,7 @@ var matio = read('matio.html');
  */
 
 var filters = require('./fixtures/filters');
+var selectors = require('./fixtures/selectors');
 
 /**
  * Tests
@@ -30,32 +32,32 @@ describe('x-ray-select', function() {
   describe('strings', function() {
     it('should work with strings', function() {
       var xray = Xray(matio);
-      assert('http://github.com/matthewmueller' == xray('a[href]'));
+      assert('http://github.com/matthewmueller' == xray('a->href'));
     })
 
-    it('should support [html] to get the innerHTML', function() {
+    it('should support {html} to get the innerHTML', function() {
       var xray = Xray(matio);
-      assert('<a href="http://github.com/matthewmueller">Github</a>' == xray('.Header-list-item[html]').trim());
+      assert('<a href="http://github.com/matthewmueller">Github</a>' == xray('.Header-list-item->html').trim());
     });
 
     it('should support when cheerio instances are passed in', function() {
       var xray = Xray(cheerio.load(matio));
-      assert('http://github.com/matthewmueller' == xray('a[href]'));
+      assert('http://github.com/matthewmueller' == xray('a->href'));
     });
 
     it('should support filters', function() {
       var xray = Xray(matio, filters);
-      assert('github.com/matthewmueller' == xray('a[href]|href'));
+      assert('github.com/matthewmueller' == xray('a->href|href'));
     });
 
     it('should support multiple filters', function() {
       var xray = Xray(matio, filters);
-      assert('GITHUB.COM/MATTHEWMUELLER' == xray('a[href]|href|uppercase'));
+      assert('GITHUB.COM/MATTHEWMUELLER' == xray('a->href|href|uppercase'));
     });
 
     it('should support filters with arguments', function() {
       var xray = Xray(matio, filters);
-      assert.deepEqual(['github.com', 'matthewmueller'], xray('a[href]|href|split:/'));
+      assert.deepEqual(['github.com', 'matthewmueller'], xray('a->href|href|split:/'));
     })
 
     it('should return undefined if nothing is false', function() {
@@ -65,7 +67,7 @@ describe('x-ray-select', function() {
 
     it('should support falsy values from filters', function() {
       var xray = Xray(matio, filters);
-      assert(false === xray('a[href]|secure'));
+      assert(false === xray('a->href|secure'));
     })
   })
 
@@ -74,7 +76,7 @@ describe('x-ray-select', function() {
     it('should work with arrays', function() {
       var xray = Xray(matio);
 
-      assert.deepEqual(xray(['.Header a[href]']), [
+      assert.deepEqual(xray(['.Header a->href']), [
         "http://github.com/matthewmueller",
         "http://twitter.com/mattmueller",
         "http://mat.io",
@@ -92,7 +94,7 @@ describe('x-ray-select', function() {
     it('should support filters', function() {
       var xray = Xray(matio, filters);
 
-      assert.deepEqual(xray(['.Header a[href] | href']), [
+      assert.deepEqual(xray(['.Header a->href | href']), [
         "github.com/matthewmueller",
         "twitter.com/mattmueller",
         "mat.io",
@@ -106,8 +108,8 @@ describe('x-ray-select', function() {
 
       var arr = xray([{
         $root: '.item',
-        link: 'a[href]',
-        https: 'a[href] | secure',
+        link: 'a->href',
+        https: 'a->href | secure',
       }]);
 
       assert.deepEqual(arr.shift(), { link: 'https://github.com/bmcmahen/react-wysiwyg', https: true });
@@ -123,8 +125,8 @@ describe('x-ray-select', function() {
 
       var obj = xray({
         $root: '.item',
-        link: 'a[href]',
-        http: 'a[href] | insecure',
+        link: 'a->href',
+        http: 'a->href | insecure',
       });
 
       assert.deepEqual(obj, {
@@ -138,9 +140,9 @@ describe('x-ray-select', function() {
       var xray = Xray(matio);
       var arr = xray([{
         $root: '.item',
-        link: 'a[href]',
-        thumb: 'img[src]',
-        className: '[class]'
+        link: 'a->href',
+        thumb: 'img->src',
+        className: '->class'
       }]);
 
       assert.deepEqual(arr.shift(), {
@@ -176,9 +178,9 @@ describe('x-ray-select', function() {
 
       var arr = xray([{
         $root: '.item',
-        link: 'a[href] | href',
-        thumb: 'img[src] | href | uppercase',
-        className: '[class] | uppercase'
+        link: 'a->href | href',
+        thumb: 'img->src | href | uppercase',
+        className: '->class | uppercase'
       }]);
 
       assert.deepEqual(arr.shift(), {
@@ -199,14 +201,14 @@ describe('x-ray-select', function() {
 
       var arr = xray([{
         $root: '.item',
-        link: 'a[href]',
-        thumb: 'img[src]',
-        className: '[class]',
+        link: 'a->href',
+        thumb: 'img->src',
+        className: '->class',
         content: {
           $root: '.item-content',
           title: 'h2',
           body: 'section',
-          className: '[class]'
+          className: '->class'
         },
         tags: ['.item-tags li']
       }]);
@@ -265,9 +267,9 @@ describe('x-ray-select', function() {
 
       var obj = xray({
         $root: '.item',
-        link: 'a[href]',
-        thumb: 'img[src]',
-        className: '[class]'
+        link: 'a->href',
+        thumb: 'img->src',
+        className: '->class'
       });
 
       assert.equal('https://github.com/bmcmahen/react-wysiwyg', obj.link);
@@ -281,14 +283,14 @@ describe('x-ray-select', function() {
 
       var obj = xray({
         $root: '.item',
-        link: 'a[href]',
-        thumb: 'img[src]',
-        className: '[class]',
+        link: 'a->href',
+        thumb: 'img->src',
+        className: '->class',
         content: {
           $root: '.item-content',
           title: 'h2',
           content: 'section',
-          className: '[class]'
+          className: '->class'
         }
       });
 
@@ -309,14 +311,14 @@ describe('x-ray-select', function() {
 
       var obj = xray({
         $root: ".item",
-        link: 'a[href]',
-        thumb: 'img[src]',
-        className: '[class]',        
+        link: 'a->href',
+        thumb: 'img->src',
+        className: '->class',        
         content: {
           $root: '.item-content',
           title: 'h2',
           body: 'section',
-          className: '[class]'
+          className: '->class'
         },
         tags: ['.item-tags li']
       })
@@ -335,6 +337,28 @@ describe('x-ray-select', function() {
 
     });
   });
+});
+
+describe('x-ray-select/lib/regexps/rselector', function() {
+
+  it('should extract single element selectors', function () {
+    for (var i = 0, l = selectors.length; i < l; i++) {
+      assert.equal(selectors[i].match(rselector)[1], selectors[i], 'it doesn\'t extract ' + selectors[i] + ' correctly.');
+    }
+  });
+
+  it('should extract single attribute selectors', function () {
+    assert.equal('->attr'.match(rselector)[2], 'attr');
+  });
+
+  it('should extract any combination of element and attribute selectors', function () {
+    for (var i = 0, l = selectors.length; i < l; i++) {
+      var str = selectors[i] + '->attr';
+      assert.equal(str.match(rselector)[1], selectors[i], 'it doesn\'t extract ' + selectors[i] + ' correctly from ' + str + '.');
+      assert.equal(str.match(rselector)[2], 'attr', 'it doesn\'t extract attr correctly from ' + str + '.');
+    }
+  });
+
 });
 
 function read(fixture) {
