@@ -21,7 +21,7 @@ var matio = read('matio.html');
  */
 
 var filters = require('./fixtures/filters');
-var selectors = require('./fixtures/selectors');
+var selectors = /([^\{]+)?(?:\{([^\{]+)\})?/;
 
 /**
  * Tests
