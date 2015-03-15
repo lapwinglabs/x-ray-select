@@ -18,7 +18,7 @@ module.exports = Xray;
  * Regexps
  */
 
-var rselector = /([^\{]+)?(?:\{([^\{]+)\})?/;
+var rselector = /(.*(?=->)|.*)(?:->(.*))?/;
 var rfilters = /\s*\|\s*/;
 
 /**
