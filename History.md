@@ -1,4 +1,10 @@
 
+1.1.0 / 2015-03-16
+==================
+
+  * rewrite x-ray-select for more clarity. fixed bugs and now groups when there's no
+  * re-write tests to inline and include simpler fixtures
+
 1.0.6 / 2015-03-08
 ==================
 
