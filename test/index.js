@@ -2,18 +2,12 @@
  * Module Dependencies
  */
 
+var m = require('multiline').stripIndent;
 var cheerio = require('cheerio');
 var join = require('path').join;
 var assert = require('assert');
 var Xray = require('..');
 var fs = require('fs');
-
-/**
- * Fixtures
- */
-
-var google = read('google.html');
-var matio = read('matio.html');
 
 /**
  * Filters
@@ -27,54 +21,70 @@ var filters = require('./fixtures/filters');
 
 describe('x-ray-select', function() {
 
+  /**
+   * Strings
+   */
+
   describe('strings', function() {
     it('should work with strings', function() {
-      var xray = Xray(matio);
-      assert('http://github.com/matthewmueller' == xray('a[href]'));
+      var xray = Xray('<a href="mat.io"></a>');
+      assert('mat.io' == xray('a[href]'));
     })
 
     it('should support [html] to get the innerHTML', function() {
-      var xray = Xray(matio);
-      assert('<a href="http://github.com/matthewmueller">Github</a>' == xray('.Header-list-item[html]').trim());
+      var xray = Xray('<body><h2>hello world</h2></body>');
+      assert('<h2>hello world</h2>' == xray('body[html]'));
     });
 
     it('should support when cheerio instances are passed in', function() {
-      var xray = Xray(cheerio.load(matio));
-      assert('http://github.com/matthewmueller' == xray('a[href]'));
+      var xray = Xray(cheerio.load('<a href="mat.io"></a>'));
+      assert('mat.io' == xray('a[href]'));
     });
 
     it('should support filters', function() {
-      var xray = Xray(matio, filters);
-      assert('github.com/matthewmueller' == xray('a[href]|href'));
+      var xray = Xray('<a href="https://mat.io"></a>', filters);
+      assert('mat.io' == xray('a[href]|href'));
     });
 
     it('should support multiple filters', function() {
-      var xray = Xray(matio, filters);
-      assert('GITHUB.COM/MATTHEWMUELLER' == xray('a[href]|href|uppercase'));
+      var xray = Xray('<a href="https://mat.io"></a>', filters);
+      assert('MAT.IO' == xray('a[href]|href|uppercase'));
     });
 
     it('should support filters with arguments', function() {
-      var xray = Xray(matio, filters);
-      assert.deepEqual(['github.com', 'matthewmueller'], xray('a[href]|href|split:/'));
+      var xray = Xray('<a href="https://mat.io/rss"></a>', filters);
+      assert.deepEqual(['mat.io', 'rss'], xray('a[href]|href|split:/'));
     })
 
     it('should return undefined if nothing is false', function() {
-      var xray = Xray(matio);
+      var xray = Xray('<a href="mat.io"></a>');
       assert(undefined === xray('.zzzzz'));
     })
 
     it('should support falsy values from filters', function() {
-      var xray = Xray(matio, filters);
+      var xray = Xray('<a href="http://mat.io"></a>', filters);
       assert(false === xray('a[href]|secure'));
     })
   })
 
 
+  /**
+   * Arrays
+   */
+
   describe('arrays', function() {
     it('should work with arrays', function() {
-      var xray = Xray(matio);
+      var xray = Xray(m(function() {/*
+        <header>
+        <a href="http://github.com/matthewmueller">github</a>
+        <a href="http://twitter.com/mattmueller">twitter</a>
+        <a href="http://mat.io">mat.io</a>
+        <a href="http://lapwinglabs.com">lapwing labs</a>
+        <a href="mailto:matt@lapwinglabs.com">
+        </header>
+      */}))
 
-      assert.deepEqual(xray(['.Header a[href]']), [
+      assert.deepEqual(xray(['header a[href]']), [
         "http://github.com/matthewmueller",
         "http://twitter.com/mattmueller",
         "http://mat.io",
@@ -84,15 +94,51 @@ describe('x-ray-select', function() {
     });
 
     it('should return an empty array when nothing is available', function() {
-      var xray = Xray(matio);
+      var xray = Xray(m(function() {/*
+        <header>
+          <a href="http://github.com/matthewmueller">github</a>
+          <a href="http://twitter.com/mattmueller">twitter</a>
+          <a href="http://mat.io">mat.io</a>
+          <a href="http://lapwinglabs.com">lapwing labs</a>
+          <a href="mailto:matt@lapwinglabs.com">
+        </header>
+      */}))
+
       var arr = xray(['.zzzz']);
       assert.deepEqual([], arr);
     })
 
-    it('should support filters', function() {
-      var xray = Xray(matio, filters);
 
-      assert.deepEqual(xray(['.Header a[href] | href']), [
+    it('should work with arrays of objects when nothing is found', function() {
+      var xray = Xray(m(function() {/*
+        <header>
+          <a href="http://github.com/matthewmueller">github</a>
+          <a href="http://twitter.com/mattmueller">twitter</a>
+          <a href="http://mat.io">mat.io</a>
+          <a href="http://lapwinglabs.com">lapwing labs</a>
+          <a href="mailto:matt@lapwinglabs.com">
+        </header>
+      */}))
+
+      var arr = xray([{
+        thumb: '.thumbz'
+      }]);
+
+      assert.deepEqual([], arr);
+    })
+
+    it('should support filters', function() {
+      var xray = Xray(m(function() {/*
+        <header>
+          <a href="http://github.com/matthewmueller">github</a>
+          <a href="http://twitter.com/mattmueller">twitter</a>
+          <a href="http://mat.io">mat.io</a>
+          <a href="http://lapwinglabs.com">lapwing labs</a>
+          <a href="mailto:matt@lapwinglabs.com">
+        </header>
+      */}), filters);
+
+      assert.deepEqual(xray(['header a[href] | href']), [
         "github.com/matthewmueller",
         "twitter.com/mattmueller",
         "mat.io",
@@ -102,7 +148,19 @@ describe('x-ray-select', function() {
     })
 
     it('should support falsy values from filters for collections', function() {
-      var xray = Xray(matio, filters);
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+          </div>
+          <div class="item">
+            <a href="https://twitter.com/mattmueller">twitter</a>
+          </div>
+          <div class="item">
+            <a href="http://mat.io">mat.io</a>
+          </div>
+        </header>
+      */}), filters);
 
       var arr = xray([{
         $root: '.item',
@@ -110,32 +168,40 @@ describe('x-ray-select', function() {
         https: 'a[href] | secure',
       }]);
 
-      assert.deepEqual(arr.shift(), { link: 'https://github.com/bmcmahen/react-wysiwyg', https: true });
-      assert.deepEqual(arr.shift(), { link: 'http://lapwinglabs.com/', https: false });
-      assert.deepEqual(arr.shift(), { link: 'https://github.com/mentum/lambdaws', https: true });
-      assert.deepEqual(arr.shift(), { link: 'https://github.com/russss/Herd', https: true });
-      assert.deepEqual(arr.shift(), { link: 'http://ift.tt/1yOzsob', https: false });
-      assert.deepEqual(arr.shift(), { link: 'https://github.com/Jam3/jam3-testing-tools', https: true });
+      assert.deepEqual(arr.shift(), {
+        link: 'https://github.com/matthewmueller',
+        https: true
+      });
+
+      assert.deepEqual(arr.shift(), {
+        link: 'https://twitter.com/mattmueller',
+        https: true
+      });
+
+      assert.deepEqual(arr.shift(), {
+        link: 'http://mat.io',
+        https: false
+      });
     })
 
-    it('should support falsy values from filters for single objects', function() {
-      var xray = Xray(matio, filters);
-
-      var obj = xray({
-        $root: '.item',
-        link: 'a[href]',
-        http: 'a[href] | insecure',
-      });
-
-      assert.deepEqual(obj, {
-        link: 'https://github.com/bmcmahen/react-wysiwyg',
-        http: false
-      });
-    });
-
-
     it('should work with an array of objects', function() {
-      var xray = Xray(matio);
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+            <img src="github.png" />
+          </div>
+          <div class="item">
+            <a href="https://twitter.com/mattmueller">twitter</a>
+            <img src="twitter.png" />
+          </div>
+          <div class="item">
+            <a href="http://mat.io">mat.io</a>
+            <img src="matt.png" />
+          </div>
+        </header>
+      */}), filters);
+
       var arr = xray([{
         $root: '.item',
         link: 'a[href]',
@@ -143,36 +209,40 @@ describe('x-ray-select', function() {
         className: '[class]'
       }]);
 
+      assert(3 == arr.length);
+
       assert.deepEqual(arr.shift(), {
-        link: 'https://github.com/bmcmahen/react-wysiwyg',
-        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        link: 'https://github.com/matthewmueller',
+        thumb: 'github.png',
         className: 'item'
       });
 
       assert.deepEqual(arr.shift(), {
-        link: 'http://lapwinglabs.com/',
-        thumb: 'http://lapwinglabs.com/thumbnail.png',
+        link: 'https://twitter.com/mattmueller',
+        thumb: 'twitter.png',
         className: 'item'
       });
 
       assert.deepEqual(arr.shift(), {
-        link: 'https://github.com/mentum/lambdaws',
-        thumb: 'https://avatars0.githubusercontent.com/u/10017482?v=3&s=400',
+        link: 'http://mat.io',
+        thumb: 'matt.png',
         className: 'item'
       });
     });
 
-    it('should work with arrays of objects when nothing is found', function() {
-      var xray = Xray(matio);
-      var arr = xray([{
-        thumb: '.thumbz'
-      }]);
-
-      assert.deepEqual([], arr);
-    })
-
     it('should support filters on objects', function() {
-      var xray = Xray(matio, filters);
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+            <img src="github.png" />
+          </div>
+          <div class="item">
+            <a href="https://twitter.com/mattmueller">twitter</a>
+            <img src="twitter.png" />
+          </div>
+        </header>
+      */}), filters);
 
       var arr = xray([{
         $root: '.item',
@@ -181,21 +251,52 @@ describe('x-ray-select', function() {
         className: '[class] | uppercase'
       }]);
 
+      assert(2 == arr.length);
+
       assert.deepEqual(arr.shift(), {
-        link: 'github.com/bmcmahen/react-wysiwyg',
-        thumb: 'AVATARS2.GITHUBUSERCONTENT.COM/U/1236841?V=3&S=400',
+        link: 'github.com/matthewmueller',
+        thumb: 'GITHUB.PNG',
         className: 'ITEM'
       });
 
       assert.deepEqual(arr.shift(), {
-        link: 'lapwinglabs.com/',
-        thumb: 'LAPWINGLABS.COM/THUMBNAIL.PNG',
-        className: 'ITEM'        
+        link: 'twitter.com/mattmueller',
+        thumb: 'TWITTER.PNG',
+        className: 'ITEM'
       });
     })
 
     it('should work with an array of nested objects', function() {
-      var xray = Xray(matio);
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+            <img src="github.png" />
+            <div class="item-content">
+              <h2>matthewmueller's github</h2>
+              <section>matthewmueller's bio</section>
+            </div>
+            <ul class="item-tags">
+              <li>a</li>
+              <li>b</li>
+              <li>c</li>
+            </ul>
+          </div>
+          <div class="item">
+            <a href="https://twitter.com/mattmueller">twitter</a>
+            <img src="twitter.png" />
+            <div class="item-content">
+              <h2>mattmueller's twitter</h2>
+              <section>mattmueller's bio</section>
+            </div>
+            <ul class="item-tags">
+              <li>1</li>
+              <li>2</li>
+              <li>3</li>
+            </ul>
+          </div>
+        </header>
+      */}), filters);
 
       var arr = xray([{
         $root: '.item',
@@ -212,48 +313,38 @@ describe('x-ray-select', function() {
       }]);
 
       assert.deepEqual(arr.shift(), {
-        link: 'https://github.com/bmcmahen/react-wysiwyg',
-        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
+        link: 'https://github.com/matthewmueller',
+        thumb: 'github.png',
         className: 'item',
         content: {
-          title: 'bmcmahen/react-wysiwyg',
-          body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    ',
+          title: 'matthewmueller\'s github',
+          body: 'matthewmueller\'s bio',
           className: 'item-content',
         },
-        tags: [ 'github', 'development' ]
+        tags: [ 'a', 'b', 'c' ]
       });
 
       assert.deepEqual(arr.shift(), {
-        "link": "http://lapwinglabs.com/",
-        "thumb": "http://lapwinglabs.com/thumbnail.png",
-        "className": "item",
-        "content": {
-          "title": "Lapwing Labs",
-          "body": "\n                        New Blog Post: Principles of an Ideal Database Client.\n                        http://t.co/CRsotzXeWQ — Matthew Mueller (@MattMueller)\n                        January 25, 2015\n                    ",
-          "className": "item-content"
+        link: 'https://twitter.com/mattmueller',
+        thumb: 'twitter.png',
+        className: 'item',
+        content: {
+          title: 'mattmueller\'s twitter',
+          body: 'mattmueller\'s bio',
+          className: 'item-content'
         },
-        "tags": [
-          "twitter"
-        ]
-      });
-
-      assert.deepEqual(arr.shift(), {
-        "link": "https://github.com/mentum/lambdaws",
-        "thumb": "https://avatars0.githubusercontent.com/u/10017482?v=3&s=400",
-        "className": "item",
-        "content": {
-          "title": "mentum/lambdaws",
-          "body": "\n                        MatthewMueller starred mentum/lambdaws\n                    ",
-          "className": "item-content"
-        },
-        "tags": []
+        tags: [ '1', '2', '3' ]
       });
     })
   });
 
+  /**
+   * Objects
+   */
+
   describe('objects', function() {
     it('should return an empty object when nothing is found', function() {
-      var xray = Xray(matio);
+      var xray = Xray('<a href="mat.io"></a>');
       var obj = xray({
         thumb: '.thumbz'
       });
@@ -261,7 +352,18 @@ describe('x-ray-select', function() {
     })
 
     it('should work with shallow objects', function() {
-      var xray = Xray(matio);
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+            <img src="github.png" />
+          </div>
+          <div class="item">
+            <a href="https://twitter.com/mattmueller">twitter</a>
+            <img src="twitter.png" />
+          </div>
+        </header>
+      */}));
 
       var obj = xray({
         $root: '.item',
@@ -270,14 +372,42 @@ describe('x-ray-select', function() {
         className: '[class]'
       });
 
-      assert.equal('https://github.com/bmcmahen/react-wysiwyg', obj.link);
-      assert.equal('https://avatars2.githubusercontent.com/u/1236841?v=3&s=400', obj.thumb);
+      assert.equal('https://github.com/matthewmueller', obj.link);
+      assert.equal('github.png', obj.thumb);
       assert.equal('item', obj.className);
-
     });
 
     it('should work with deeply nested objects', function() {
-      var xray = Xray(matio);
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+            <img src="github.png" />
+            <div class="item-content">
+              <h2>matthewmueller's github</h2>
+              <section>matthewmueller's bio</section>
+            </div>
+            <ul class="item-tags">
+              <li>a</li>
+              <li>b</li>
+              <li>c</li>
+            </ul>
+          </div>
+          <div class="item">
+            <a href="https://twitter.com/mattmueller">twitter</a>
+            <img src="twitter.png" />
+            <div class="item-content">
+              <h2>mattmueller's twitter</h2>
+              <section>mattmueller's bio</section>
+            </div>
+            <ul class="item-tags">
+              <li>1</li>
+              <li>2</li>
+              <li>3</li>
+            </ul>
+          </div>
+        </header>
+      */}), filters);
 
       var obj = xray({
         $root: '.item',
@@ -287,55 +417,54 @@ describe('x-ray-select', function() {
         content: {
           $root: '.item-content',
           title: 'h2',
-          content: 'section',
-          className: '[class]'
-        }
-      });
-
-      assert.deepEqual(obj, {
-        link: 'https://github.com/bmcmahen/react-wysiwyg',
-        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
-        className: 'item',
-        content: {
-          title: 'bmcmahen/react-wysiwyg',
-          content: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    ',
-          className: 'item-content'
-        }
-      });
-    });
-
-    it('should support single objects with an array inside', function() {
-      var xray = Xray(matio);
-
-      var obj = xray({
-        $root: ".item",
-        link: 'a[href]',
-        thumb: 'img[src]',
-        className: '[class]',        
-        content: {
-          $root: '.item-content',
-          title: 'h2',
           body: 'section',
           className: '[class]'
         },
         tags: ['.item-tags li']
-      })
-
-      assert.deepEqual(obj, {
-        link: 'https://github.com/bmcmahen/react-wysiwyg',
-        thumb: 'https://avatars2.githubusercontent.com/u/1236841?v=3&s=400',
-        className: 'item',
-        content: {
-          title: 'bmcmahen/react-wysiwyg',
-          body: '\n                        MatthewMueller starred bmcmahen/react-wysiwyg\n                    ',
-          className: 'item-content'
-        },
-        tags: [ 'github', 'development' ]
       });
 
+      assert.deepEqual(obj, {
+        link: 'https://github.com/matthewmueller',
+        thumb: 'github.png',
+        className: 'item',
+        content: {
+          title: 'matthewmueller\'s github',
+          body: 'matthewmueller\'s bio',
+          className: 'item-content',
+        },
+        tags: [ 'a', 'b', 'c' ]
+      });
+    });
+
+    it('should support falsy values from filters for single objects', function() {
+      var xray = Xray(m(function() {/*
+        <header>
+          <div class="item">
+            <a href="https://github.com/matthewmueller">github</a>
+          </div>
+        </header>
+      */}), filters);
+
+      var obj = xray({
+        $root: '.item',
+        link: 'a[href]',
+        http: 'a[href] | insecure',
+      });
+
+      assert.deepEqual(obj, {
+        link: 'https://github.com/matthewmueller',
+        http: false
+      });
     });
   });
 });
+
+/**
+ * Read a file
+ *
+ * @param {String} fixture
+ * @return {String}
+ */
 
 function read(fixture) {
   return fs.readFileSync(join(__dirname, 'fixtures', fixture), 'utf8');
