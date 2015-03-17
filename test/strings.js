@@ -31,17 +31,17 @@ describe('strings selectors', function() {
   });
 
   it('should support filters', function() {
-    var xray = Xray('<a href="https://mat.io"></a>', filters);
+    var xray = Xray('<a href="https://mat.io"></a>', { filters: filters });
     assert('mat.io' == xray('a[href]|href'));
   });
 
   it('should support multiple filters', function() {
-    var xray = Xray('<a href="https://mat.io"></a>', filters);
+    var xray = Xray('<a href="https://mat.io"></a>', { filters: filters });
     assert('MAT.IO' == xray('a[href]|href|uppercase'));
   });
 
   it('should support filters with arguments', function() {
-    var xray = Xray('<a href="https://mat.io/rss"></a>', filters);
+    var xray = Xray('<a href="https://mat.io/rss"></a>', { filters: filters });
     assert.deepEqual(['mat.io', 'rss'], xray('a[href]|href|split:/'));
   })
 
@@ -51,7 +51,7 @@ describe('strings selectors', function() {
   })
 
   it('should support falsy values from filters', function() {
-    var xray = Xray('<a href="http://mat.io"></a>', filters);
+    var xray = Xray('<a href="http://mat.io"></a>', { filters: filters });
     assert(false === xray('a[href]|secure'));
   })
 })

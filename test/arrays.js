@@ -130,7 +130,7 @@ describe('arrays selectors', function() {
         <a href="http://lapwinglabs.com">lapwing labs</a>
         <a href="mailto:matt@lapwinglabs.com">
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     assert.deepEqual(xray(['header a[href] | href']), [
       "github.com/matthewmueller",
@@ -154,7 +154,7 @@ describe('arrays selectors', function() {
           <a href="http://mat.io">mat.io</a>
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var arr = xray([{
       $root: '.item',
@@ -194,7 +194,7 @@ describe('arrays selectors', function() {
           <img src="matt.png" />
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var arr = xray([{
       $root: '.item',
@@ -236,7 +236,7 @@ describe('arrays selectors', function() {
           <img src="twitter.png" />
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var arr = xray([{
       $root: '.item',
@@ -290,7 +290,7 @@ describe('arrays selectors', function() {
           </ul>
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var arr = xray([{
       $root: '.item',
@@ -361,7 +361,7 @@ describe('arrays selectors', function() {
           </ul>
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var arr = xray([{
       link: 'a[href]',
