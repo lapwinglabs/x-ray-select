@@ -79,7 +79,7 @@ describe('objects selectors', function() {
           </ul>
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var obj = xray({
       $root: '.item',
@@ -123,7 +123,7 @@ describe('objects selectors', function() {
           </ul>
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var obj = xray({
       link: 'a[href]',
@@ -158,7 +158,7 @@ describe('objects selectors', function() {
           <a href="https://github.com/matthewmueller">github</a>
         </div>
       </header>
-    */}), filters);
+    */}), { filters: filters });
 
     var obj = xray({
       $root: '.item',

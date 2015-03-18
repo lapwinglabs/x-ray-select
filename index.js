@@ -2,7 +2,6 @@
  * Module Dependencies
  */
 
-var formatParser = require('format-parser');
 var type = require('component-type');
 var omit = require('lodash.omit');
 var cheerio = require('cheerio');
@@ -33,25 +32,33 @@ var rfilters = /\s*\|\s*/;
  * @api public
  */
 
-function Xray(html, formatters) {
-  formatters = formatters || {};
+function Xray(html, options) {
+  options = options || {};
+  options = {
+    rselector: options.rselector || rselector,
+    rfilters: options.rfilters || rfilters,
+    filters: options.filters || {},
+    selectorHandler: options.selectorHandler || false,
+    objectHandler: options.objectHandler || false,
+  };
   html = html || '';
 
   var $ = html.html ? html : cheerio.load(html);
   var $document = $.root();
   return xray;
 
-  function xray(obj, $scope) {
+  function xray(obj, $scope, opts) {
+    opts = opts || options;
     $scope = $scope || $document;
 
     // switch between the types of objects
     switch(type(obj)) {
-      case 'string': return string_find_one.call(xray, $scope, obj, formatters);
-      case 'object': return object_find_one.call(xray, $scope, obj, formatters);
+      case 'string': return string_find_one.call(xray, $scope, obj, opts);
+      case 'object': return object_find_one.call(xray, $scope, obj, opts);
       case 'array':
         switch (type(obj[0])) {
-          case 'string': return string_find_many.call(xray, $scope, obj[0], formatters);
-          case 'object': return object_find_many.call(xray, $scope, obj[0], formatters);
+          case 'string': return string_find_many.call(xray, $scope, obj[0], opts);
+          case 'object': return object_find_many.call(xray, $scope, obj[0], opts);
           default: return [];
         }
     }
@@ -63,12 +70,17 @@ function Xray(html, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} str
- * @param {Object} formatters
+ * @param {Object} options
  * @return {String}
  */
 
-function string_find_one($root, str, formatters) {
-  var select = parse(str, formatters);
+function string_find_one($root, str, options) {
+  var select = parse(str, options);
+  if (options.selectorHandler) {
+    select = options.selectorHandler($root, select, options, this);
+    if(type(select.content) == 'object' && !keys(select.content).length) return undefined;
+    if(select.content !== undefined) return format(select.content, select.formatters);
+  }
   var $el = select.selector
     ? $root.find(select.selector).eq(0)
     : $root.eq(0);
@@ -81,21 +93,27 @@ function string_find_one($root, str, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {Object} obj
- * @param {Object} formatters
+ * @param {Object} options
  * @return {String}
  */
 
-function object_find_one($root, obj, formatters) {
+function object_find_one($root, obj, options) {
   $root = obj.$root ? $root.find(obj.$root) : $root;
   var xray = this;
   var out = {};
 
+  if (options.objectHandler) {
+    var res = options.objectHandler($root, obj, options, xray);
+    if (type(res.content) == 'object' && !keys(res.content).length) return undefined;
+    if (res.content !== undefined) return res.content;
+    obj = res.obj;
+  }
   keys(obj).forEach(function(k) {
     var v = obj[k];
 
     var str = 'string' == typeof v
-      ? string_find_one.call(xray, $root, v, formatters)
-      : xray(v, $root);
+      ? string_find_one.call(xray, $root, v, options)
+      : xray(v, $root, options);
 
     if (str !== undefined) out[k] = str;
   });
@@ -108,12 +126,12 @@ function object_find_one($root, obj, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} str
- * @param {Object} formatters
+ * @param {Object} options
  * @param {Array}
  */
 
-function string_find_many($root, str, formatters) {
-  var select = parse(str, formatters);
+function string_find_many($root, str, options) {
+  var select = parse(str, options);
   var $els = select.selector ? $root.find(select.selector) : $root;
   var out = [];
 
@@ -130,14 +148,14 @@ function string_find_many($root, str, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} obj
- * @param {Object} formatters
+ * @param {Object} options
  * @return {Array}
  */
 
-function object_find_many($root, obj, formatters) {
+function object_find_many($root, obj, options) {
   return obj.$root
-    ? object_find_many_with_root.call(this, $root, obj, formatters)
-    : object_find_many_without_root.call(this, $root, obj, formatters)
+    ? object_find_many_with_root.call(this, $root, obj, options)
+    : object_find_many_without_root.call(this, $root, obj, options)
 }
 
 /**
@@ -145,11 +163,11 @@ function object_find_many($root, obj, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} obj
- * @param {Object} formatters
+ * @param {Object} options
  * @return {Array}
  */
 
-function object_find_many_with_root($root, obj, formatters) {
+function object_find_many_with_root($root, obj, options) {
   var $els = $root.find(obj.$root);
   if (!$els.length) return [];
   var ks = keys(obj);
@@ -158,15 +176,16 @@ function object_find_many_with_root($root, obj, formatters) {
 
   // reject any special characters
   var o = omit(obj, function(v, k) {
-    return k[0] == '$';
+    return k == '$root';
   });
 
   $els.each(function(i) {
     var $el = $els.eq(i);
-    out.push(object_find_one.call(xray, $el, o, formatters));
+    out.push(object_find_one.call(xray, $el, o, options));
   });
-
-  return out;
+  return out.filter(function(x){
+    return type(x) == 'object' ? keys(x).length > 0 : x;
+  });
 }
 
 /**
@@ -174,11 +193,11 @@ function object_find_many_with_root($root, obj, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} obj
- * @param {Object} formatters
+ * @param {Object} options
  * @return {Array}
  */
 
-function object_find_many_without_root($root, obj, formatters) {
+function object_find_many_without_root($root, obj, options) {
   var ks = keys(obj);
   var xray = this;
   var out = [];
@@ -187,8 +206,8 @@ function object_find_many_without_root($root, obj, formatters) {
     var v = obj[k];
 
     switch (type(v)) {
-      case 'string': return string_find_many.call(this, $root, v, formatters);
-      case 'object': return object_find_many.call(this, $root, v, formatters);
+      case 'string': return string_find_many.call(this, $root, v, options);
+      case 'object': return object_find_many.call(this, $root, v, options);
       default: return [];
     }
   });
@@ -227,25 +246,27 @@ function format(str, formatters) {
  * @return {Object}
  */
 
-function parse(str, filters) {
-  var formatters = str.split(rfilters);
-  str = formatters.shift();
+function parse(str, options) {
+  var formatters = str.split(options.rfilters);
+  var fselector = formatters.shift();
 
-  formatters = formatParser(formatters.join('|'));
+  formatters = formatParser(formatters.join('|'), options.rfilters);
 
   formatters = formatters.filter(function(formatter) {
-    return filters[formatter.name];
+    return options.filters[formatter.name];
   }).map(function(formatter) {
-    formatter.fn = filters[formatter.name];
+    formatter.fn = options.filters[formatter.name];
     return formatter;
   })
 
-  var m = str.match(rselector) || [];
+  var m = fselector.match(options.rselector) || [];
 
   return {
     selector: m[1],
     attribute: m[2],
-    formatters: formatters
+    formatters: formatters,
+    fselector: fselector,
+    input: str
   };
 }
 
@@ -269,4 +290,43 @@ function render($el, select) {
   function fmt(str) {
     return format(str, select.formatters);
   }
+}
+
+/**
+ * Parse the given format `str`.
+ *
+ * Modified version from:
+ * https://github.com/component/format-parser
+ *
+ * @param {String} str
+ * @return {Array}
+ */
+
+function formatParser(str, rfilters){
+  return str.split(rfilters).map(function(call){
+    var parts = call.split(':');
+    var name = parts.shift();
+    var args = parseArgs(parts.join(':'));
+    return {
+      name: name,
+      args: args
+    };
+  });
+};
+
+/**
+ * Parse args `str`.
+ *
+ * @param {String} str
+ * @return {Array}
+ */
+
+function parseArgs(str) {
+  var args = [];
+  var re = /"([^"]*)"|'([^']*)'|([^ \t,]+)/g;
+  var m;
+  while (m = re.exec(str)) {
+    args.push(m[2] || m[1] || m[0]);
+  }
+  return args;
 }
