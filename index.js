@@ -2,7 +2,6 @@
  * Module Dependencies
  */
 
-var formatParser = require('format-parser');
 var type = require('component-type');
 var omit = require('lodash.omit');
 var cheerio = require('cheerio');
@@ -48,17 +47,18 @@ function Xray(html, options) {
   var $document = $.root();
   return xray;
 
-  function xray(obj, $scope) {
+  function xray(obj, $scope, opts) {
+    opts = opts || options;
     $scope = $scope || $document;
 
     // switch between the types of objects
     switch(type(obj)) {
-      case 'string': return string_find_one.call(xray, $scope, obj, options);
-      case 'object': return object_find_one.call(xray, $scope, obj, options);
+      case 'string': return string_find_one.call(xray, $scope, obj, opts);
+      case 'object': return object_find_one.call(xray, $scope, obj, opts);
       case 'array':
         switch (type(obj[0])) {
-          case 'string': return string_find_many.call(xray, $scope, obj[0], options);
-          case 'object': return object_find_many.call(xray, $scope, obj[0], options);
+          case 'string': return string_find_many.call(xray, $scope, obj[0], opts);
+          case 'object': return object_find_many.call(xray, $scope, obj[0], opts);
           default: return [];
         }
     }
@@ -78,7 +78,8 @@ function string_find_one($root, str, options) {
   var select = parse(str, options);
   if (options.selectorHandler) {
     select = options.selectorHandler($root, select, options, this);
-    if(select.content) return format(select.content, select.formatters);
+    if(type(select.content) == 'object' && !keys(select.content).length) return undefined;
+    if(select.content !== undefined) return format(select.content, select.formatters);
   }
   var $el = select.selector
     ? $root.find(select.selector).eq(0)
@@ -103,7 +104,8 @@ function object_find_one($root, obj, options) {
 
   if (options.objectHandler) {
     var res = options.objectHandler($root, obj, options, xray);
-    if (res.content) return res.content;
+    if (type(res.content) == 'object' && !keys(res.content).length) return undefined;
+    if (res.content !== undefined) return res.content;
     obj = res.obj;
   }
   keys(obj).forEach(function(k) {
@@ -111,7 +113,7 @@ function object_find_one($root, obj, options) {
 
     var str = 'string' == typeof v
       ? string_find_one.call(xray, $root, v, options)
-      : xray(v, $root);
+      : xray(v, $root, options);
 
     if (str !== undefined) out[k] = str;
   });
@@ -182,7 +184,7 @@ function object_find_many_with_root($root, obj, options) {
     out.push(object_find_one.call(xray, $el, o, options));
   });
   return out.filter(function(x){
-    return type(x) == 'object' ? keys(x).length > 0 : true;
+    return type(x) == 'object' ? keys(x).length > 0 : x;
   });
 }
 
@@ -248,7 +250,7 @@ function parse(str, options) {
   var formatters = str.split(options.rfilters);
   var fselector = formatters.shift();
 
-  formatters = formatParser(formatters.join('|'));
+  formatters = formatParser(formatters.join('|'), options.rfilters);
 
   formatters = formatters.filter(function(formatter) {
     return options.filters[formatter.name];
@@ -288,4 +290,43 @@ function render($el, select) {
   function fmt(str) {
     return format(str, select.formatters);
   }
+}
+
+/**
+ * Parse the given format `str`.
+ *
+ * Modified version from:
+ * https://github.com/component/format-parser
+ *
+ * @param {String} str
+ * @return {Array}
+ */
+
+function formatParser(str, rfilters){
+  return str.split(rfilters).map(function(call){
+    var parts = call.split(':');
+    var name = parts.shift();
+    var args = parseArgs(parts.join(':'));
+    return {
+      name: name,
+      args: args
+    };
+  });
+};
+
+/**
+ * Parse args `str`.
+ *
+ * @param {String} str
+ * @return {Array}
+ */
+
+function parseArgs(str) {
+  var args = [];
+  var re = /"([^"]*)"|'([^']*)'|([^ \t,]+)/g;
+  var m;
+  while (m = re.exec(str)) {
+    args.push(m[2] || m[1] || m[0]);
+  }
+  return args;
 }
