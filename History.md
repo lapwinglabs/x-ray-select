@@ -1,4 +1,9 @@
 
+2.0.0 / 2015-03-26
+==================
+
+  * a[href] => a@href. update API to disambiguate a[href] the selector and a[href] the attribute selector
+
 1.1.0 / 2015-03-16
 ==================
 
