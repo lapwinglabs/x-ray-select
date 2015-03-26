@@ -11,7 +11,8 @@
     "component-type": "^1.1.0",
     "format-parser": "0.0.2",
     "lodash.omit": "^3.0.0",
-    "lodash.zip": "^3.0.0"
+    "lodash.zip": "^3.0.0",
+    "x-ray-parse": "^1.0.1"
   },
   "devDependencies": {
     "mocha": "^2.1.0",

@@ -26,7 +26,7 @@ describe('arrays selectors', function() {
       </header>
     */}))
 
-    assert.deepEqual(xray(['header a[href]']), [
+    assert.deepEqual(xray(['header a @href']), [
       "http://github.com/matthewmueller",
       "http://twitter.com/mattmueller",
       "http://mat.io",
@@ -43,7 +43,7 @@ describe('arrays selectors', function() {
 
     var arr = xray([{
       text: 'a',
-      href: 'a[href]'
+      href: 'a@href'
     }]);
 
     assert.deepEqual(arr, [
@@ -69,7 +69,7 @@ describe('arrays selectors', function() {
     var arr = xray([{
       title: 'h2',
       text: 'a',
-      href: 'a[href]'
+      href: 'a@href'
     }]);
 
     assert.deepEqual(arr, [
@@ -132,7 +132,7 @@ describe('arrays selectors', function() {
       </header>
     */}), filters);
 
-    assert.deepEqual(xray(['header a[href] | href']), [
+    assert.deepEqual(xray(['header a@href | href']), [
       "github.com/matthewmueller",
       "twitter.com/mattmueller",
       "mat.io",
@@ -158,8 +158,8 @@ describe('arrays selectors', function() {
 
     var arr = xray([{
       $root: '.item',
-      link: 'a[href]',
-      https: 'a[href] | secure',
+      link: 'a@href',
+      https: 'a@href | secure',
     }]);
 
     assert.deepEqual(arr.shift(), {
@@ -198,9 +198,9 @@ describe('arrays selectors', function() {
 
     var arr = xray([{
       $root: '.item',
-      link: 'a[href]',
-      thumb: 'img[src]',
-      className: '[class]'
+      link: 'a@href',
+      thumb: 'img@src',
+      className: '@class'
     }]);
 
     assert(3 == arr.length);
@@ -240,9 +240,9 @@ describe('arrays selectors', function() {
 
     var arr = xray([{
       $root: '.item',
-      link: 'a[href] | href',
-      thumb: 'img[src] | href | uppercase',
-      className: '[class] | uppercase'
+      link: 'a@href | href',
+      thumb: 'img@src | href | uppercase',
+      className: '@class | uppercase'
     }]);
 
     assert(2 == arr.length);
@@ -294,14 +294,14 @@ describe('arrays selectors', function() {
 
     var arr = xray([{
       $root: '.item',
-      link: 'a[href]',
-      thumb: 'img[src]',
-      className: '[class]',
+      link: 'a@href',
+      thumb: 'img@src',
+      className: '@class',
       content: {
         $root: '.item-content',
         title: 'h2',
         body: 'section',
-        className: '[class]'
+        className: '@class'
       },
       tags: ['.item-tags li']
     }]);
@@ -364,13 +364,13 @@ describe('arrays selectors', function() {
     */}), filters);
 
     var arr = xray([{
-      link: 'a[href]',
-      thumb: 'img[src]',
+      link: 'a@href',
+      thumb: 'img@src',
       content: {
         $root: '.item-content',
         title: 'h2',
         body: 'section',
-        className: '[class]'
+        className: '@class'
       },
       tags: ['.item-tags li']
     }]);

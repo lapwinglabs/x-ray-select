@@ -27,8 +27,8 @@ var Select = require('x-ray-select');
 
 var struct = [{
   $root: ".item",
-  link: 'a[href]',
-  thumb: 'img[src]',
+  link: 'a@href',
+  thumb: 'img@src',
   content: {
     $root: '.item-content',
     title: 'h2',

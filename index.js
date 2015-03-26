@@ -2,8 +2,8 @@
  * Module Dependencies
  */
 
-var formatParser = require('format-parser');
 var type = require('component-type');
+var parser = require('x-ray-parse');
 var omit = require('lodash.omit');
 var cheerio = require('cheerio');
 var zip = require('lodash.zip');
@@ -63,12 +63,13 @@ function Xray(html, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} str
- * @param {Object} formatters
+ * @param {Object} filter
  * @return {String}
  */
 
-function string_find_one($root, str, formatters) {
-  var select = parse(str, formatters);
+function string_find_one($root, str, filters) {
+  var select = parse(str, filters);
+
   var $el = select.selector
     ? $root.find(select.selector).eq(0)
     : $root.eq(0);
@@ -81,11 +82,11 @@ function string_find_one($root, str, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {Object} obj
- * @param {Object} formatters
+ * @param {Object} filter
  * @return {String}
  */
 
-function object_find_one($root, obj, formatters) {
+function object_find_one($root, obj, filter) {
   $root = obj.$root ? $root.find(obj.$root) : $root;
   var xray = this;
   var out = {};
@@ -94,7 +95,7 @@ function object_find_one($root, obj, formatters) {
     var v = obj[k];
 
     var str = 'string' == typeof v
-      ? string_find_one.call(xray, $root, v, formatters)
+      ? string_find_one.call(xray, $root, v, filter)
       : xray(v, $root);
 
     if (str !== undefined) out[k] = str;
@@ -108,12 +109,12 @@ function object_find_one($root, obj, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} str
- * @param {Object} formatters
+ * @param {Object} filter
  * @param {Array}
  */
 
-function string_find_many($root, str, formatters) {
-  var select = parse(str, formatters);
+function string_find_many($root, str, filter) {
+  var select = parse(str, filter);
   var $els = select.selector ? $root.find(select.selector) : $root;
   var out = [];
 
@@ -130,14 +131,14 @@ function string_find_many($root, str, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} obj
- * @param {Object} formatters
+ * @param {Object} filter
  * @return {Array}
  */
 
-function object_find_many($root, obj, formatters) {
+function object_find_many($root, obj, filter) {
   return obj.$root
-    ? object_find_many_with_root.call(this, $root, obj, formatters)
-    : object_find_many_without_root.call(this, $root, obj, formatters)
+    ? object_find_many_with_root.call(this, $root, obj, filter)
+    : object_find_many_without_root.call(this, $root, obj, filter)
 }
 
 /**
@@ -145,11 +146,11 @@ function object_find_many($root, obj, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} obj
- * @param {Object} formatters
+ * @param {Object} filter
  * @return {Array}
  */
 
-function object_find_many_with_root($root, obj, formatters) {
+function object_find_many_with_root($root, obj, filter) {
   var $els = $root.find(obj.$root);
   if (!$els.length) return [];
   var ks = keys(obj);
@@ -163,7 +164,7 @@ function object_find_many_with_root($root, obj, formatters) {
 
   $els.each(function(i) {
     var $el = $els.eq(i);
-    out.push(object_find_one.call(xray, $el, o, formatters));
+    out.push(object_find_one.call(xray, $el, o, filter));
   });
 
   return out;
@@ -174,11 +175,11 @@ function object_find_many_with_root($root, obj, formatters) {
  *
  * @param {Cheerio Element} $root
  * @param {String} obj
- * @param {Object} formatters
+ * @param {Object} filter
  * @return {Array}
  */
 
-function object_find_many_without_root($root, obj, formatters) {
+function object_find_many_without_root($root, obj, filter) {
   var ks = keys(obj);
   var xray = this;
   var out = [];
@@ -187,8 +188,8 @@ function object_find_many_without_root($root, obj, formatters) {
     var v = obj[k];
 
     switch (type(v)) {
-      case 'string': return string_find_many.call(this, $root, v, formatters);
-      case 'object': return object_find_many.call(this, $root, v, formatters);
+      case 'string': return string_find_many.call(this, $root, v, filter);
+      case 'object': return object_find_many.call(this, $root, v, filter);
       default: return [];
     }
   });
@@ -209,12 +210,12 @@ function object_find_many_without_root($root, obj, formatters) {
  * Format
  *
  * @param {String} str
- * @param {Array} formatters
+ * @param {Array} filter
  * @return {String}
  */
 
-function format(str, formatters) {
-  return formatters.reduce(function(out, format) {
+function format(str, filter) {
+  return filter.reduce(function(out, format) {
     return format.fn.apply(format.fn, [out].concat(format.args));
   }, str);
 }
@@ -228,25 +229,17 @@ function format(str, formatters) {
  */
 
 function parse(str, filters) {
-  var formatters = str.split(rfilters);
-  str = formatters.shift();
+  var obj = parser(str);
+  obj.filters = obj.filters
+    .filter(function(filter) {
+      return filters[filter.name];
+    })
+    .map(function(filter) {
+      filter.fn = filters[filter.name];
+      return filter;
+    });
 
-  formatters = formatParser(formatters.join('|'));
-
-  formatters = formatters.filter(function(formatter) {
-    return filters[formatter.name];
-  }).map(function(formatter) {
-    formatter.fn = filters[formatter.name];
-    return formatter;
-  })
-
-  var m = str.match(rselector) || [];
-
-  return {
-    selector: m[1],
-    attribute: m[2],
-    formatters: formatters
-  };
+  return obj;
 }
 
 /**
@@ -267,6 +260,6 @@ function render($el, select) {
   }
 
   function fmt(str) {
-    return format(str, select.formatters);
+    return format(str, select.filters);
   }
 }

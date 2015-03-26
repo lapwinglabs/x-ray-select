@@ -39,9 +39,9 @@ describe('objects selectors', function() {
 
     var obj = xray({
       $root: '.item',
-      link: 'a[href]',
-      thumb: 'img[src]',
-      className: '[class]'
+      link: 'a@href',
+      thumb: 'img@src',
+      className: '@class'
     });
 
     assert.equal('https://github.com/matthewmueller', obj.link);
@@ -83,14 +83,14 @@ describe('objects selectors', function() {
 
     var obj = xray({
       $root: '.item',
-      link: 'a[href]',
-      thumb: 'img[src]',
-      className: '[class]',
+      link: 'a@href',
+      thumb: 'img@src',
+      className: '@class',
       content: {
         $root: '.item-content',
         title: 'h2',
         body: 'section',
-        className: '[class]'
+        className: '@class'
       }
     });
 
@@ -126,14 +126,14 @@ describe('objects selectors', function() {
     */}), filters);
 
     var obj = xray({
-      link: 'a[href]',
-      thumb: 'img[src]',
-      tagName: '[tagName]',
+      link: 'a@href',
+      thumb: 'img@src',
+      tagName: '@tagName',
       content: {
         $root: '.item-content',
         title: 'h2',
         body: 'section',
-        className: '[class]'
+        className: '@class'
       },
       tags: ['.tags li']
     });
@@ -162,8 +162,8 @@ describe('objects selectors', function() {
 
     var obj = xray({
       $root: '.item',
-      link: 'a[href]',
-      http: 'a[href] | insecure',
+      link: 'a@href',
+      http: 'a@href | insecure',
     });
 
     assert.deepEqual(obj, {
