@@ -20,9 +20,7 @@ module.exports = Xray;
  * Regexps
  */
 
-var rselector = /([^\[]+)?(?:\[([^\[]+)\])?/;
 var rdom = /^(tagName|nodeType)$/;
-var rfilters = /\s*\|\s*/;
 
 /**
  * x-ray
@@ -34,8 +32,8 @@ var rfilters = /\s*\|\s*/;
  */
 
 function Xray(html, formatters) {
-  formatters = formatters || {};
   html = html || '';
+  formatters = formatters || {};
 
   var $ = html.html ? html : cheerio.load(html);
   var $document = $.root();
@@ -46,7 +44,10 @@ function Xray(html, formatters) {
 
     // switch between the types of objects
     switch(type(obj)) {
-      case 'string': return string_find_one.call(xray, $scope, obj, formatters);
+      case 'string':
+        return parse(obj, formatters).attribute
+          ? string_find_one.call(xray, $scope, obj, formatters)
+          : $(obj, $scope)
       case 'object': return object_find_one.call(xray, $scope, obj, formatters);
       case 'array':
         switch (type(obj[0])) {

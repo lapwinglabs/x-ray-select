@@ -45,9 +45,24 @@ describe('strings selectors', function() {
     assert.deepEqual(['mat.io', 'rss'], xray('a@href|href|split:/'));
   })
 
-  it('should return undefined if nothing is false', function() {
+  it('should return a cheerio for tag selectors', function() {
     var xray = Xray('<a href="mat.io"></a>');
-    assert(undefined === xray('.zzzzz'));
+    assert('mat.io' === xray('a').attr('href'));
+  })
+
+  it('should return a cheerio object for class selectors', function() {
+    var xray = Xray('<a href="mat.io"></a>');
+    assert(0 === xray('.zzzzz').length);
+  })
+
+  it('should return a cheerio object for id selectors', function() {
+    var xray = Xray('<a href="mat.io" id="link"></a>');
+    assert('mat.io' === xray('#link').attr('href'));
+  })
+
+  it('should return a cheerio object for attribute selectors', function() {
+    var xray = Xray('<a href="mat.io" id="link"></a>');
+    assert('mat.io' === xray('[href]').attr('href'));
   })
 
   it('should support falsy values from filters', function() {
